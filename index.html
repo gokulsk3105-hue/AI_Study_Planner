@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindMate — AI Study Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,900;1,300;1,600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0b0c10;--surface:#13141a;--surface2:#1c1d25;--surface3:#23242e;--text:#f0eeea;--muted:#7a7880;--border:#2a2b35;--accent:#7effa0;--accent2:#ff6b6b;--accent3:#ffd166;--accent4:#74b9ff;--radius:14px}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.bg-orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.12;animation:drift 12s ease-in-out infinite alternate}
+.orb1{width:500px;height:500px;background:#7effa0;top:-100px;left:-100px}
+.orb2{width:400px;height:400px;background:#74b9ff;bottom:-100px;right:-100px;animation-delay:-4s}
+.orb3{width:300px;height:300px;background:#ffd166;top:40%;left:40%;animation-delay:-8s}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(40px,30px) scale(1.1)}}
+.wrap{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:2rem 1rem 5rem}
+
+/* HEADER */
+header{text-align:center;padding:2.5rem 0 2rem}
+.logo-chip{display:inline-flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:6px 16px;font-size:12px;color:var(--muted);margin-bottom:1.2rem;letter-spacing:0.04em}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+h1{font-family:'Fraunces',serif;font-size:clamp(2.2rem,5vw,3.4rem);font-weight:900;line-height:1.05;letter-spacing:-0.03em;margin-bottom:0.6rem}
+h1 span{color:var(--accent);font-style:italic}
+.subtitle{font-size:14px;color:var(--muted);max-width:460px;margin:0 auto;line-height:1.6}
+
+/* STORAGE BANNER */
+.storage-banner{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;font-size:13px;color:var(--muted)}
+.storage-icon{font-size:16px}
+.storage-text b{color:var(--accent);font-weight:600}
+.clear-btn{margin-left:auto;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all 0.2s}
+.clear-btn:hover{border-color:var(--accent2);color:var(--accent2)}
+
+/* RETURNING USER BANNER */
+.returning-banner{background:linear-gradient(135deg,rgba(126,255,160,0.08),rgba(116,185,255,0.08));border:1px solid rgba(126,255,160,0.2);border-radius:var(--radius);padding:1.25rem 1.5rem;margin-bottom:1.25rem;display:none}
+.rb-title{font-weight:600;font-size:14px;color:var(--accent);margin-bottom:4px}
+.rb-sub{font-size:13px;color:var(--muted);margin-bottom:1rem}
+.rb-btns{display:flex;gap:8px}
+.rb-btn{padding:8px 18px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;border:none}
+.rb-continue{background:var(--accent);color:#000}
+.rb-new{background:transparent;color:var(--muted);border:1px solid var(--border)!important;border:none}
+.rb-new:hover{border-color:var(--text)!important;color:var(--text)}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.75rem;margin-bottom:1.25rem;animation:fadeUp 0.5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.card-label{font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:1.25rem;display:flex;align-items:center;gap:8px}
+.card-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* INPUTS */
+label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bottom:6px}
+input[type=text],input[type=number],input[type=date],select{width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s}
+input:focus,select:focus{border-color:var(--accent)}
+select option{background:var(--surface2)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.fg{margin-bottom:1rem}
+.subject-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:8px}
+.subject-row input{flex:1}
+.difficulty-sel{width:120px}
+.remove-btn{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:10px 12px;cursor:pointer;font-size:16px;transition:all 0.2s;flex-shrink:0}
+.remove-btn:hover{border-color:var(--accent2);color:var(--accent2)}
+.add-subject-btn{display:flex;align-items:center;gap:6px;background:transparent;border:1px dashed var(--border);color:var(--muted);border-radius:10px;padding:10px 16px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;transition:all 0.2s;width:100%;justify-content:center;margin-top:4px}
+.add-subject-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* TECHNIQUE GRID */
+.technique-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tech-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:all 0.2s}
+.tech-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.tech-card.active{border-color:var(--accent);background:#0f1f14}
+.tech-name{font-size:13px;font-weight:600;margin-bottom:4px}
+.tech-desc{font-size:11px;color:var(--muted);line-height:1.4}
+
+/* BUTTONS */
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{opacity:0.88;transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--text);color:var(--text)}
+
+.result-hidden{display:none}
+
+/* COUNTDOWN */
+.countdown-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+.cd-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px 8px;text-align:center}
+.cd-num{font-family:'Fraunces',serif;font-size:2rem;font-weight:900;color:var(--accent);line-height:1}
+.cd-label{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.06em}
+
+/* PLAN */
+.plan-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.plan-title{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:600}
+.plan-badge{background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--muted)}
+.week-block{margin-bottom:1.5rem}
+.week-label{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.day-row{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border)}
+.day-row:last-child{border-bottom:none}
+.day-name{font-size:12px;font-weight:600;color:var(--muted);min-width:40px;padding-top:3px}
+.day-tasks{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+.task-pill{padding:5px 12px;border-radius:999px;font-size:12px;font-weight:500;cursor:pointer;transition:opacity 0.2s;user-select:none}
+.task-pill:hover{opacity:0.8}
+.task-pill.hard{background:#1a1030;color:#c4b0ff;border:1px solid #3a2060}
+.task-pill.medium{background:#1a2a10;color:#90e080;border:1px solid #304020}
+.task-pill.easy{background:#1a2530;color:#74b9ff;border:1px solid #203040}
+.task-pill.revision{background:#2a1a10;color:#ffd166;border:1px solid #403010}
+.task-pill.rest{background:#1a1a1a;color:#7a7880;border:1px solid #2a2b35}
+.task-pill.done{opacity:0.4;text-decoration:line-through}
+.day-hours{font-size:12px;color:var(--muted);padding-top:3px;white-space:nowrap}
+
+/* PROGRESS */
+.subject-progress{margin-bottom:1rem}
+.sp-header{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.sp-name{font-weight:500}
+.sp-meta{color:var(--muted)}
+.sp-track{height:6px;background:var(--surface3);border-radius:999px;overflow:hidden}
+.sp-fill{height:100%;border-radius:999px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.5rem}
+.stat-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.stat-val{font-family:'Fraunces',serif;font-size:1.8rem;font-weight:900;line-height:1}
+.stat-label{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.04em}
+
+/* STREAK */
+.streak-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:0.75rem}
+.streak-day{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted)}
+.streak-day.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700}
+.streak-day.today{border-color:var(--accent);color:var(--accent)}
+
+/* POMODORO */
+.pomodoro-wrap{text-align:center;padding:1rem 0}
+.pomo-timer{font-family:'Fraunces',serif;font-size:4rem;font-weight:900;color:var(--accent);letter-spacing:-0.04em;margin:0.5rem 0}
+.pomo-label{font-size:13px;color:var(--muted);margin-bottom:1.5rem}
+.pomo-btns{display:flex;gap:10px;justify-content:center}
+.pomo-btn{padding:10px 24px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s}
+.pomo-btn:hover{border-color:var(--accent);color:var(--accent)}
+.pomo-btn.primary{background:var(--accent);color:#000;border-color:var(--accent)}
+.pomo-dots{display:flex;gap:6px;justify-content:center;margin-top:1rem}
+.pomo-dot{width:10px;height:10px;border-radius:50%;background:var(--surface3);transition:background 0.3s}
+.pomo-dot.done{background:var(--accent)}
+.pomo-sessions-saved{font-size:12px;color:var(--muted);margin-top:8px}
+
+/* TIPS */
+.tips-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tip-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px}
+.tip-icon{font-size:20px;margin-bottom:6px}
+.tip-text{font-size:13px;color:var(--muted);line-height:1.5}
+
+/* SAVED INDICATOR */
+.saved-toast{position:fixed;bottom:2rem;right:2rem;background:var(--surface2);border:1px solid var(--accent);border-radius:10px;padding:10px 18px;font-size:13px;color:var(--accent);display:flex;align-items:center;gap:8px;z-index:999;animation:toastIn 0.3s ease;pointer-events:none}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+footer{text-align:center;font-size:12px;color:var(--muted);padding-top:2rem}
+</style>
+</head>
+<body>
+<div class="bg-orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+
+<div class="wrap">
+  <header>
+    <div class="logo-chip"><div class="logo-dot"></div> AI Study Planner</div>
+    <h1>Study <span>Smarter,</span><br>Not Harder.</h1>
+    <p class="subtitle">Enter your exam date and subjects — get a full AI study schedule with a live countdown and built-in Pomodoro timer.</p>
+  </header>
+
+  <!-- STORAGE STATUS BANNER -->
+  <div class="storage-banner">
+    <span class="storage-icon">💾</span>
+    <span class="storage-text">Your data is <b>auto-saved in your browser</b> using localStorage — no account needed.</span>
+    <button class="clear-btn" onclick="clearAllData()">Clear Data</button>
+  </div>
+
+  <!-- RETURNING USER BANNER -->
+  <div class="returning-banner" id="returningBanner">
+    <div class="rb-title">👋 Welcome back!</div>
+    <div class="rb-sub" id="returningSubtext"></div>
+    <div class="rb-btns">
+      <button class="rb-btn rb-continue" onclick="loadSavedPlan()">Continue My Plan →</button>
+      <button class="rb-btn rb-new" onclick="startFresh()">Start Fresh</button>
+    </div>
+  </div>
+
+  <!-- SETUP FORM -->
+  <div id="setupSection">
+    <div class="card" style="animation-delay:0.1s">
+      <div class="card-label">Exam Info</div>
+      <div class="row2">
+        <div class="fg"><label>Exam / Test Name</label><input type="text" id="examName" placeholder="e.g. Semester Finals, GATE 2026"></div>
+        <div class="fg"><label>Exam Date</label><input type="date" id="examDate"></div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>Daily study hours</label><input type="number" id="dailyHours" value="4" min="1" max="12"></div>
+        <div class="fg"><label>Study style</label>
+          <select id="studyStyle">
+            <option value="balanced">Balanced</option>
+            <option value="hardFirst">Hard subjects first</option>
+            <option value="easyFirst">Easy subjects first</option>
+            <option value="spaced">Spaced repetition</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="animation-delay:0.2s">
+      <div class="card-label">Your Subjects</div>
+      <div id="subjectList">
+        <div class="subject-row">
+          <input type="text" placeholder="Subject name (e.g. Mathematics)" class="subject-input">
+          <select class="difficulty-sel"><option value="hard">Hard</option><option value="medium" selected>Medium</option><option value="easy">Easy</option></select>
+          <button class="remove-btn" onclick="removeSubject(this)">×</button>
+        </div>
+      </div>
+      <button class="add-subject-btn" onclick="addSubject()">+ Add Subject</button>
+    </div>
+
+    <div class="card" style="animation-delay:0.3s">
+      <div class="card-label">Study Techniques</div>
+      <div class="technique-grid">
+        <div class="tech-card active" onclick="toggleTech(this)"><div class="tech-name">🍅 Pomodoro</div><div class="tech-desc">25 min focus + 5 min break</div></div>
+        <div class="tech-card" onclick="toggleTech(this)"><div class="tech-name">📝 Feynman</div><div class="tech-desc">Teach it to learn it deeply</div></div>
+        <div class="tech-card" onclick="toggleTech(this)"><div class="tech-name">🔁 Spaced Rep</div><div class="tech-desc">Review at increasing intervals</div></div>
+        <div class="tech-card" onclick="toggleTech(this)"><div class="tech-name">✍️ Active Recall</div><div class="tech-desc">Self-test instead of re-reading</div></div>
+        <div class="tech-card" onclick="toggleTech(this)"><div class="tech-name">🗺️ Mind Maps</div><div class="tech-desc">Visual topic connections</div></div>
+        <div class="tech-card" onclick="toggleTech(this)"><div class="tech-name">💭 Blurting</div><div class="tech-desc">Write all you know, then check</div></div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="generatePlan()">Generate My Study Plan →</button>
+  </div>
+
+  <!-- RESULT SECTION -->
+  <div id="resultSection" class="result-hidden">
+
+    <!-- STATS -->
+    <div class="card">
+      <div class="card-label">Your Progress</div>
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-val" id="statStreak" style="color:var(--accent3)">0🔥</div><div class="stat-label">Day Streak</div></div>
+        <div class="stat-box"><div class="stat-val" id="statSessions" style="color:var(--accent)">0</div><div class="stat-label">Pomodoros Done</div></div>
+        <div class="stat-box"><div class="stat-val" id="statTasks" style="color:var(--accent4)">0%</div><div class="stat-label">Tasks Done</div></div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Last 7 days check-in</div>
+      <div class="streak-row" id="streakRow"></div>
+    </div>
+
+    <!-- COUNTDOWN -->
+    <div class="card">
+      <div class="card-label">Exam Countdown</div>
+      <div class="countdown-grid">
+        <div class="cd-box"><div class="cd-num" id="cdDays">0</div><div class="cd-label">Days</div></div>
+        <div class="cd-box"><div class="cd-num" id="cdHours">0</div><div class="cd-label">Hours</div></div>
+        <div class="cd-box"><div class="cd-num" id="cdMins">0</div><div class="cd-label">Mins</div></div>
+        <div class="cd-box"><div class="cd-num" id="cdSecs">0</div><div class="cd-label">Secs</div></div>
+      </div>
+      <div id="examTitle" style="text-align:center;font-family:'Fraunces',serif;font-size:1rem;color:var(--muted);margin-top:10px"></div>
+    </div>
+
+    <!-- PLAN -->
+    <div class="card">
+      <div class="plan-header">
+        <div class="plan-title">Your Study Plan</div>
+        <div class="plan-badge" id="planBadge"></div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:1rem">Click any task pill to mark it done ✓</div>
+      <div id="subjectProgressWrap"></div>
+      <div id="planOutput"></div>
+    </div>
+
+    <!-- POMODORO -->
+    <div class="card">
+      <div class="card-label">Pomodoro Timer</div>
+      <div class="pomodoro-wrap">
+        <div class="pomo-label" id="pomoLabel">Focus Session</div>
+        <div class="pomo-timer" id="pomoTimer">25:00</div>
+        <div class="pomo-btns">
+          <button class="pomo-btn primary" id="pomoStartBtn" onclick="pomodoroToggle()">Start</button>
+          <button class="pomo-btn" onclick="pomodoroReset()">Reset</button>
+        </div>
+        <div class="pomo-dots" id="pomoDots"><div class="pomo-dot"></div><div class="pomo-dot"></div><div class="pomo-dot"></div><div class="pomo-dot"></div></div>
+        <div class="pomo-sessions-saved" id="pomoSessionsSaved"></div>
+      </div>
+    </div>
+
+    <!-- TIPS -->
+    <div class="card">
+      <div class="card-label">Study Tips</div>
+      <div class="tips-grid" id="tipsGrid"></div>
+    </div>
+
+    <button class="btn btn-ghost" onclick="resetAll()" style="margin-top:0.5rem">← Edit My Plan</button>
+  </div>
+</div>
+
+<footer>MindMate — data saved locally in your browser · no account needed</footer>
+
+<script>
+// ============================================================
+// localStorage KEYS
+// ============================================================
+const KEYS = {
+  PLAN:       'mindmate_plan',        // Full plan config (exam, subjects, etc.)
+  TASKS_DONE: 'mindmate_tasks_done',  // Set of completed task IDs
+  POMO_COUNT: 'mindmate_pomo_count',  // Total pomodoro sessions
+  STREAK:     'mindmate_streak',      // { count, lastDate, history[] }
+  CHECKIN:    'mindmate_checkin',     // Last check-in date
+};
+
+// ============================================================
+// SAVE / LOAD HELPERS
+// ============================================================
+function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+function load(key, def=null){ try{ const v=localStorage.getItem(key); return v?JSON.parse(v):def; }catch(e){ return def; } }
+
+function showToast(msg='Saved!'){
+  const old=document.querySelector('.saved-toast');if(old)old.remove();
+  const t=document.createElement('div');t.className='saved-toast';
+  t.innerHTML=`<span>💾</span> ${msg}`;document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2200);
+}
+
+// ============================================================
+// ON PAGE LOAD — check for saved plan
+// ============================================================
+window.addEventListener('DOMContentLoaded', ()=>{
+  const saved=load(KEYS.PLAN);
+  if(saved && saved.examName){
+    const examDate=new Date(saved.examDate);
+    const daysLeft=Math.ceil((examDate-new Date())/(1000*60*60*24));
+    if(daysLeft>0){
+      document.getElementById('returningBanner').style.display='block';
+      document.getElementById('returningSubtext').textContent=
+        `Your plan for "${saved.examName}" is saved — ${daysLeft} day(s) remaining. Pick up where you left off?`;
+    }
+  }
+  updateStreakUI();
+  updatePomoCountUI();
+});
+
+function startFresh(){
+  document.getElementById('returningBanner').style.display='none';
+}
+
+function loadSavedPlan(){
+  const saved=load(KEYS.PLAN);
+  if(!saved) return;
+  document.getElementById('returningBanner').style.display='none';
+  document.getElementById('examName').value=saved.examName||'';
+  document.getElementById('examDate').value=saved.examDate||'';
+  document.getElementById('dailyHours').value=saved.dailyHours||4;
+  document.getElementById('studyStyle').value=saved.studyStyle||'balanced';
+  // Subjects
+  const list=document.getElementById('subjectList');
+  list.innerHTML='';
+  (saved.subjects||[]).forEach(sub=>{
+    const div=document.createElement('div');div.className='subject-row';
+    div.innerHTML=`<input type="text" placeholder="Subject name" class="subject-input" value="${sub.name}"><select class="difficulty-sel"><option value="hard"${sub.diff==='hard'?' selected':''}>Hard</option><option value="medium"${sub.diff==='medium'?' selected':''}>Medium</option><option value="easy"${sub.diff==='easy'?' selected':''}>Easy</option></select><button class="remove-btn" onclick="removeSubject(this)">×</button>`;
+    list.appendChild(div);
+  });
+  generatePlan();
+}
+
+// ============================================================
+// FORM HELPERS
+// ============================================================
+function addSubject(){
+  const div=document.createElement('div');div.className='subject-row';
+  div.innerHTML='<input type="text" placeholder="Subject name" class="subject-input"><select class="difficulty-sel"><option value="hard">Hard</option><option value="medium" selected>Medium</option><option value="easy">Easy</option></select><button class="remove-btn" onclick="removeSubject(this)">×</button>';
+  document.getElementById('subjectList').appendChild(div);
+}
+function removeSubject(btn){ if(document.querySelectorAll('.subject-row').length>1) btn.parentElement.remove(); }
+function toggleTech(card){ card.classList.toggle('active'); }
+
+// ============================================================
+// GENERATE PLAN
+// ============================================================
+function generatePlan(){
+  const examName=document.getElementById('examName').value||'Your Exam';
+  const examDateVal=document.getElementById('examDate').value;
+  const dailyHours=parseInt(document.getElementById('dailyHours').value)||4;
+  const style=document.getElementById('studyStyle').value;
+  if(!examDateVal){ alert('Please enter your exam date!'); return; }
+
+  const examDate=new Date(examDateVal); examDate.setHours(23,59,59);
+  const daysLeft=Math.max(1,Math.ceil((examDate-new Date())/(1000*60*60*24)));
+
+  const subjects=[];
+  document.querySelectorAll('.subject-row').forEach(row=>{
+    const name=row.querySelector('.subject-input').value.trim();
+    const diff=row.querySelector('.difficulty-sel').value;
+    if(name) subjects.push({name,diff});
+  });
+  if(!subjects.length){ alert('Add at least one subject!'); return; }
+
+  const weights={hard:3,medium:2,easy:1};
+  const totalWeight=subjects.reduce((s,sub)=>s+weights[sub.diff],0);
+  const totalHours=daysLeft*dailyHours;
+  subjects.forEach(sub=>{ sub.hours=Math.round((weights[sub.diff]/totalWeight)*totalHours); });
+
+  let sorted=[...subjects];
+  if(style==='hardFirst') sorted.sort((a,b)=>weights[b.diff]-weights[a.diff]);
+  else if(style==='easyFirst') sorted.sort((a,b)=>weights[a.diff]-weights[b.diff]);
+
+  // ---- SAVE PLAN TO localStorage ----
+  save(KEYS.PLAN,{ examName, examDate:examDateVal, dailyHours, style, subjects, savedAt:new Date().toISOString() });
+  showToast('Plan saved to browser!');
+
+  // Mark today as checked-in
+  markCheckIn();
+
+  // Show result
+  document.getElementById('setupSection').style.display='none';
+  const rs=document.getElementById('resultSection');
+  rs.classList.remove('result-hidden'); rs.style.display='block';
+
+  document.getElementById('planBadge').textContent=`${daysLeft} days · ${totalHours}h total`;
+  document.getElementById('examTitle').textContent=`Counting down to ${examName}`;
+
+  startCountdown(examDate);
+
+  // Progress bars
+  const colors=['#7effa0','#74b9ff','#ffd166','#ff6b6b','#c4b0ff','#f0a0f0'];
+  document.getElementById('subjectProgressWrap').innerHTML=sorted.map((sub,i)=>{
+    const pct=Math.min(100,Math.round((sub.hours/totalHours)*100));
+    return`<div class="subject-progress"><div class="sp-header"><span class="sp-name">${sub.name}</span><span class="sp-meta">${sub.hours}h · ${sub.diff}</span></div><div class="sp-track"><div class="sp-fill" style="width:0%;background:${colors[i%colors.length]}" data-w="${pct}%"></div></div></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('.sp-fill').forEach(el=>el.style.width=el.dataset.w),200);
+
+  // Plan
+  document.getElementById('planOutput').innerHTML=buildPlan(sorted,daysLeft,dailyHours);
+
+  // Restore completed tasks from localStorage
+  restoreTaskDoneState();
+
+  // Update task % stat
+  updateTaskStat();
+
+  // Tips
+  renderTips(subjects,daysLeft,dailyHours);
+
+  // Stats
+  updateStreakUI();
+  updatePomoCountUI();
+}
+
+// ============================================================
+// BUILD PLAN HTML
+// ============================================================
+function buildPlan(subjects,daysLeft,dailyHours){
+  const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const now=new Date();
+  const phases=getPhases(daysLeft);
+  let html=''; let dayIndex=0;
+  phases.forEach(phase=>{
+    html+=`<div class="week-block"><div class="week-label">${phase.label} (${phase.days} days)</div>`;
+    for(let d=0;d<phase.days&&dayIndex<daysLeft;d++,dayIndex++){
+      const date=new Date(now); date.setDate(date.getDate()+dayIndex);
+      const dName=dayNames[date.getDay()];
+      const isWknd=date.getDay()===0||date.getDay()===6;
+      const hrs=isWknd?Math.round(dailyHours*1.2):dailyHours;
+      const tasks=assignTasks(subjects,dayIndex,phase.type,hrs,date);
+      html+=`<div class="day-row"><div class="day-name">${dName}<br><span style="font-size:10px;font-weight:400">${date.getDate()}/${date.getMonth()+1}</span></div><div class="day-tasks">${tasks}</div><div class="day-hours">${hrs}h</div></div>`;
+    }
+    html+='</div>';
+  });
+  return html;
+}
+
+function getPhases(days){
+  if(days<=7) return[{label:'Final Push',days,type:'revision'}];
+  if(days<=14) return[{label:'Week 1 — Learn',days:Math.floor(days/2),type:'learn'},{label:'Week 2 — Revise',days:Math.ceil(days/2),type:'revision'}];
+  return[{label:'Phase 1 — Foundation',days:Math.round(days*0.5),type:'learn'},{label:'Phase 2 — Practice',days:Math.round(days*0.3),type:'practice'},{label:'Phase 3 — Revision',days:days-Math.round(days*0.5)-Math.round(days*0.3),type:'revision'}];
+}
+
+function assignTasks(subjects,dayIdx,phase,hrs,date){
+  const startIdx=dayIdx%subjects.length;
+  const subPerDay=Math.min(subjects.length,Math.max(1,Math.round(hrs/2)));
+  const dateStr=`${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+  let pills='';
+
+  const makePill=(cls,label,taskId)=>
+    `<span class="task-pill ${cls}" data-task="${taskId}" onclick="toggleTask(this)">${label}</span>`;
+
+  if(phase==='revision'){
+    for(let i=0;i<subPerDay;i++){
+      const s=subjects[(startIdx+i)%subjects.length];
+      pills+=makePill('revision',`🔁 Revise ${s.name}`,`${dateStr}-rev-${i}`);
+    }
+    pills+=makePill('rest','📝 Practice Qs',`${dateStr}-pq`);
+  } else if(phase==='practice'){
+    pills+=makePill('hard','📋 Mock Test',`${dateStr}-mock`);
+    pills+=makePill('revision','🔍 Error Analysis',`${dateStr}-err`);
+  } else {
+    for(let i=0;i<subPerDay;i++){
+      const sub=subjects[(startIdx+i)%subjects.length];
+      pills+=makePill(sub.diff,`📖 ${sub.name}`,`${dateStr}-learn-${i}`);
+    }
+    if(dayIdx%3===0) pills+=makePill('rest','🧘 Break',`${dateStr}-brk`);
+  }
+  return pills;
+}
+
+// ============================================================
+// TASK DONE STATE — localStorage
+// ============================================================
+function toggleTask(pill){
+  const taskId=pill.dataset.task;
+  let done=load(KEYS.TASKS_DONE,{});
+  if(done[taskId]){ delete done[taskId]; pill.classList.remove('done'); }
+  else { done[taskId]=true; pill.classList.add('done'); }
+  save(KEYS.TASKS_DONE,done);
+  updateTaskStat();
+  showToast(done[taskId]?'Task marked done!':'Task unmarked');
+}
+
+function restoreTaskDoneState(){
+  const done=load(KEYS.TASKS_DONE,{});
+  document.querySelectorAll('.task-pill[data-task]').forEach(pill=>{
+    if(done[pill.dataset.task]) pill.classList.add('done');
+  });
+}
+
+function updateTaskStat(){
+  const all=document.querySelectorAll('.task-pill[data-task]');
+  const doneCount=document.querySelectorAll('.task-pill.done').length;
+  const pct=all.length?Math.round((doneCount/all.length)*100):0;
+  const el=document.getElementById('statTasks');
+  if(el) el.textContent=pct+'%';
+}
+
+// ============================================================
+// STREAK — localStorage
+// ============================================================
+function markCheckIn(){
+  const today=new Date().toDateString();
+  let streak=load(KEYS.STREAK,{count:0,lastDate:null,history:[]});
+  if(streak.lastDate===today) return; // already checked in today
+  const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
+  if(streak.lastDate===yesterday.toDateString()) streak.count++;
+  else streak.count=1;
+  streak.lastDate=today;
+  if(!streak.history) streak.history=[];
+  streak.history.push(today);
+  if(streak.history.length>30) streak.history=streak.history.slice(-30);
+  save(KEYS.STREAK,streak);
+}
+
+function updateStreakUI(){
+  const streak=load(KEYS.STREAK,{count:0,lastDate:null,history:[]});
+  const el=document.getElementById('statStreak');
+  if(el) el.textContent=(streak.count||0)+'🔥';
+
+  // Last 7 days dots
+  const rowEl=document.getElementById('streakRow');
+  if(!rowEl) return;
+  const history=new Set(streak.history||[]);
+  let html='';
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const ds=d.toDateString();
+    const isToday=i===0;
+    const done=history.has(ds);
+    const label=d.toLocaleDateString('en-IN',{weekday:'short'}).slice(0,2);
+    html+=`<div class="streak-day ${done?'active':isToday?'today':''}">${label}</div>`;
+  }
+  rowEl.innerHTML=html;
+}
+
+// ============================================================
+// POMODORO SESSIONS — localStorage
+// ============================================================
+function updatePomoCountUI(){
+  const count=load(KEYS.POMO_COUNT,0);
+  const el=document.getElementById('statSessions');
+  if(el) el.textContent=count;
+  const saved=document.getElementById('pomoSessionsSaved');
+  if(saved) saved.textContent=`Total sessions completed: ${count}`;
+}
+
+let pomoInterval=null,pomoRunning=false,pomoSeconds=25*60,pomoBreak=false,pomoCycles=0;
+
+function pomodoroToggle(){
+  if(pomoRunning){
+    clearInterval(pomoInterval);pomoRunning=false;
+    document.getElementById('pomoStartBtn').textContent='Resume';
+  } else {
+    pomoRunning=true;document.getElementById('pomoStartBtn').textContent='Pause';
+    pomoInterval=setInterval(()=>{
+      pomoSeconds--;
+      if(pomoSeconds<=0){
+        clearInterval(pomoInterval);pomoRunning=false;
+        if(!pomoBreak){
+          // Session done — save to localStorage
+          pomoCycles++;
+          const total=(load(KEYS.POMO_COUNT,0))+1;
+          save(KEYS.POMO_COUNT,total);
+          updatePomoCountUI();
+          updatePomoDots();
+          showToast('Pomodoro complete! 🍅 Take a break.');
+          pomoBreak=true;pomoSeconds=5*60;
+          document.getElementById('pomoLabel').textContent='Break Time ☕';
+          document.getElementById('pomoStartBtn').textContent='Start Break';
+        } else {
+          pomoBreak=false;pomoSeconds=25*60;
+          document.getElementById('pomoLabel').textContent='Focus Session';
+          document.getElementById('pomoStartBtn').textContent='Start Focus';
+        }
+      }
+      updatePomoDisplay();
+    },1000);
+  }
+}
+function pomodoroReset(){ clearInterval(pomoInterval);pomoRunning=false;pomoSeconds=25*60;pomoBreak=false;updatePomoDisplay();document.getElementById('pomoStartBtn').textContent='Start';document.getElementById('pomoLabel').textContent='Focus Session'; }
+function updatePomoDisplay(){ const m=Math.floor(pomoSeconds/60),s=pomoSeconds%60;document.getElementById('pomoTimer').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
+function updatePomoDots(){ document.querySelectorAll('.pomo-dot').forEach((d,i)=>d.classList.toggle('done',i<pomoCycles%4)); }
+
+// ============================================================
+// COUNTDOWN
+// ============================================================
+let countdownInterval=null;
+function startCountdown(examDate){
+  if(countdownInterval) clearInterval(countdownInterval);
+  function update(){
+    const diff=examDate-new Date();
+    if(diff<=0){ clearInterval(countdownInterval);return; }
+    document.getElementById('cdDays').textContent=Math.floor(diff/(1000*60*60*24));
+    document.getElementById('cdHours').textContent=String(Math.floor((diff%(1000*60*60*24))/(1000*60*60))).padStart(2,'0');
+    document.getElementById('cdMins').textContent=String(Math.floor((diff%(1000*60*60))/(1000*60))).padStart(2,'0');
+    document.getElementById('cdSecs').textContent=String(Math.floor((diff%(1000*60))/1000)).padStart(2,'0');
+  }
+  update();countdownInterval=setInterval(update,1000);
+}
+
+// ============================================================
+// TIPS
+// ============================================================
+function renderTips(subjects,days,hours){
+  const tips=[
+    {icon:'🍅',text:`Do ${Math.round(hours*2)} Pomodoro sessions daily. 25 min focus, 5 min break.`},
+    {icon:'🌅',text:'Study hardest subjects in the morning when your brain is sharpest.'},
+    {icon:'📵',text:'Phone on Do Not Disturb during study blocks. Notifications kill deep focus.'},
+    {icon:'🔁',text:'Review notes within 24 hours of learning — doubles long-term retention.'},
+    {icon:'💤',text:`With ${days} days left, sleep 7–8 hours. Sleep consolidates memory.`},
+    {icon:'✍️',text:'After each session, write 5 key things without looking — blurting technique.'},
+  ];
+  document.getElementById('tipsGrid').innerHTML=tips.map(t=>`<div class="tip-card"><div class="tip-icon">${t.icon}</div><div class="tip-text">${t.text}</div></div>`).join('');
+}
+
+// ============================================================
+// RESET
+// ============================================================
+function resetAll(){
+  if(countdownInterval) clearInterval(countdownInterval);
+  if(pomoInterval) clearInterval(pomoInterval);
+  pomoCycles=0;pomoSeconds=25*60;pomoBreak=false;pomoRunning=false;updatePomoDisplay();
+  document.getElementById('setupSection').style.display='block';
+  document.getElementById('resultSection').style.display='none';
+  document.getElementById('returningBanner').style.display='none';
+}
+
+function clearAllData(){
+  if(!confirm('Clear all saved data? This cannot be undone.')) return;
+  Object.values(KEYS).forEach(k=>localStorage.removeItem(k));
+  document.getElementById('returningBanner').style.display='none';
+  showToast('All data cleared');
+  resetAll();
+}
+</script>
+</body>
+</html>
